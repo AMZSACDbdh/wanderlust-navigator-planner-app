@@ -5,7 +5,7 @@ import { useItineraryContext } from "../hooks/useItineraryContext";
 import Button from "../components/Button";
 import { toast } from "@/components/ui/sonner";
 
-type FormData = {
+interface FormData {
   destination: string;
   startDate: string;
   endDate: string;
@@ -15,13 +15,13 @@ type FormData = {
     activities: string;
     budget: string;
   };
-};
+}
 
-type FormErrors = {
+interface FormErrors {
   destination?: string;
   startDate?: string;
   endDate?: string;
-};
+}
 
 const CreateItinerary = () => {
   const navigate = useNavigate();
@@ -70,21 +70,19 @@ const CreateItinerary = () => {
     const { name, value } = e.target;
     
     if (name.includes(".")) {
-      // Handle nested preference fields
       const [parent, child] = name.split(".");
-      setFormData({
-        ...formData,
+      setFormData(prev => ({
+        ...prev,
         [parent]: {
-          ...formData[parent as keyof FormData],
+          ...(prev as any)[parent],
           [child]: value,
         },
-      });
+      }));
     } else {
-      // Handle top-level fields
-      setFormData({
-        ...formData,
+      setFormData(prev => ({
+        ...prev,
         [name]: value,
-      });
+      }));
     }
   };
   
@@ -92,20 +90,15 @@ const CreateItinerary = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form
-    const isValid = validateForm();
-    
-    if (isValid) {
+    if (validateForm()) {
       setIsSubmitting(true);
       
       try {
-        // Format preferences as an array
         const preferenceArray = Object.entries(formData.preferences).map(([category, value]) => ({
           category,
           value,
         }));
         
-        // Add the new itinerary
         await addItinerary({
           destination: formData.destination,
           startDate: formData.startDate,
@@ -113,10 +106,7 @@ const CreateItinerary = () => {
           preferences: preferenceArray,
         });
         
-        // Show success toast
         toast.success("Itinerary created successfully!");
-        
-        // Navigate to itineraries page
         navigate("/itineraries");
       } catch (error) {
         console.error("Error creating itinerary:", error);
@@ -136,7 +126,7 @@ const CreateItinerary = () => {
         </div>
         
         <div className="p-6">
-          <div role="form" onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Destination Field */}
             <div>
               <label htmlFor="destination" className="block text-sm font-medium text-gray-700 mb-1">
@@ -292,7 +282,6 @@ const CreateItinerary = () => {
             {/* Submit Button */}
             <div className="flex justify-end">
               <Button
-                onClick={handleSubmit}
                 type="submit"
                 variant="primary"
                 disabled={isSubmitting}
@@ -301,7 +290,7 @@ const CreateItinerary = () => {
                 {isSubmitting ? "Creating..." : "Create Itinerary"}
               </Button>
             </div>
-          </div>
+          </form>
         </div>
       </div>
     </div>
